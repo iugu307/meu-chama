@@ -70,35 +70,16 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 60);
 
-    const { data: existingConfig, error: selectError } = await supabase.from("config").select("id").limit(1);
-    console.log("Step 4 - Select error:", selectError);
-    console.log("Step 4 - Existing config:", existingConfig);
+    const { data, error } = await supabase.from("config").insert({
+      instagram_token: accessToken,
+      instagram_user_id: userId,
+      instagram_username: userData.username,
+      profile_picture_url: userData.profile_picture_url,
+      token_expires_at: expiresAt.toISOString(),
+    }).select().single();
 
-    if (existingConfig && existingConfig.length > 0) {
-      const { data: updateData, error: updateError } = await supabase
-        .from("config")
-        .update({
-          instagram_token: accessToken,
-          instagram_user_id: userId,
-          instagram_username: userData.username,
-          profile_picture_url: userData.profile_picture_url,
-          token_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existingConfig[0].id);
-      console.log("Step 4 - Update error:", updateError);
-      console.log("Step 4 - Updated config:", updateData);
-    } else {
-      const { data: insertData, error: insertError } = await supabase.from("config").insert({
-        instagram_token: accessToken,
-        instagram_user_id: userId,
-        instagram_username: userData.username,
-        profile_picture_url: userData.profile_picture_url,
-        token_expires_at: expiresAt.toISOString(),
-      });
-      console.log("Step 4 - Insert error:", insertError);
-      console.log("Step 4 - Inserted config:", insertData);
-    }
+    if (error) throw new Error(`Supabase insert failed: ${error.message}`);
+    console.log("Step 4 - Config saved:", data);
 
     // Step 5: Subscribe to webhooks
     const webhookRes = await fetch(`https://graph.instagram.com/v25.0/${userId}/subscribed_apps`, {
