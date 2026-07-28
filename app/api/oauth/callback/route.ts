@@ -33,19 +33,13 @@ export async function GET(request: NextRequest) {
     });
 
     const shortTokenData = await shortTokenRes.json();
+    console.log("Step 1 - Short token response:", shortTokenData);
 
     if (!shortTokenData.access_token) {
-      throw new Error("No access token in response");
+      throw new Error(`No access token in response: ${JSON.stringify(shortTokenData)}`);
     }
 
     // Step 2: Exchange short token for long-lived token
-    const longTokenRes = await fetch("https://graph.instagram.com/access_token", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
     const longTokenParams = new URLSearchParams({
       grant_type: "ig_exchange_token",
       client_secret: APP_SECRET,
@@ -55,6 +49,7 @@ export async function GET(request: NextRequest) {
     const longTokenUrl = `https://graph.instagram.com/access_token?${longTokenParams}`;
     const longTokenFetch = await fetch(longTokenUrl);
     const longTokenData = await longTokenFetch.json();
+    console.log("Step 2 - Long token response:", longTokenData);
 
     const accessToken = longTokenData.access_token || shortTokenData.access_token;
     const userId = shortTokenData.user_id!;
