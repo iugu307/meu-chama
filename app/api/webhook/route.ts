@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
-  const signature = request.headers.get("x-hub-signature-256");
+  const signature = request.headers.get("x-hub-signature-256") || undefined;
 
   if (!validateWebhookSignature(rawBody, signature, APP_SECRET)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
