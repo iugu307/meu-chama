@@ -67,19 +67,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 4: Save to config
+    console.log("Step 4 - Starting to save config...");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 60);
 
-    const { data, error } = await supabase.from("config").insert({
+    console.log("Step 4 - Inserting:", {
+      instagram_username: userData.username,
+      instagram_user_id: userId,
+    });
+
+    const { error } = await supabase.from("config").insert({
       instagram_token: accessToken,
       instagram_user_id: userId,
       instagram_username: userData.username,
       profile_picture_url: userData.profile_picture_url,
       token_expires_at: expiresAt.toISOString(),
-    }).select().single();
+    });
 
-    if (error) throw new Error(`Supabase insert failed: ${error.message}`);
-    console.log("Step 4 - Config saved:", data);
+    if (error) {
+      console.log("Step 4 - ERROR:", JSON.stringify(error, null, 2));
+      throw new Error(`Supabase insert failed: ${error.message}`);
+    }
+    console.log("Step 4 - Config saved successfully");
 
     // Step 5: Subscribe to webhooks
     const webhookRes = await fetch(`https://graph.instagram.com/v25.0/${userId}/subscribed_apps`, {
