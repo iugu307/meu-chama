@@ -58,11 +58,15 @@ export default function Dashboard() {
   }
 
   const handleConnect = () => {
-    if (!APP_ID || !APP_URL) return;
+    if (!APP_ID || !APP_URL) {
+      console.log("Missing APP_ID or APP_URL", { APP_ID, APP_URL });
+      return;
+    }
 
     const redirectUri = `${APP_URL}/api/oauth/callback`;
     const scope = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments";
-    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${APP_ID}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
+    console.log("Generated auth URL:", authUrl);
     window.location.href = authUrl;
   };
 
