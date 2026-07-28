@@ -10,13 +10,13 @@ export async function GET() {
 
     if (error) {
       console.error("Error fetching automations:", error);
-      return NextResponse.json({ error: "Internal error" }, { status: 500 });
+      return NextResponse.json([]);
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
     console.error("Error fetching automations:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json([]);
   }
 }
 
