@@ -70,11 +70,12 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 60);
 
-    const { data: existingConfig } = await supabase.from("config").select("id").limit(1);
+    const { data: existingConfig, error: selectError } = await supabase.from("config").select("id").limit(1);
+    console.log("Step 4 - Select error:", selectError);
     console.log("Step 4 - Existing config:", existingConfig);
 
     if (existingConfig && existingConfig.length > 0) {
-      const updateResult = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from("config")
         .update({
           instagram_token: accessToken,
@@ -85,16 +86,18 @@ export async function GET(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", existingConfig[0].id);
-      console.log("Step 4 - Updated config:", updateResult);
+      console.log("Step 4 - Update error:", updateError);
+      console.log("Step 4 - Updated config:", updateData);
     } else {
-      const insertResult = await supabase.from("config").insert({
+      const { data: insertData, error: insertError } = await supabase.from("config").insert({
         instagram_token: accessToken,
         instagram_user_id: userId,
         instagram_username: userData.username,
         profile_picture_url: userData.profile_picture_url,
         token_expires_at: expiresAt.toISOString(),
       });
-      console.log("Step 4 - Inserted config:", insertResult);
+      console.log("Step 4 - Insert error:", insertError);
+      console.log("Step 4 - Inserted config:", insertData);
     }
 
     // Step 5: Subscribe to webhooks
