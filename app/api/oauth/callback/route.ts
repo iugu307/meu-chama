@@ -60,9 +60,10 @@ export async function GET(request: NextRequest) {
     );
 
     const userData = await userRes.json();
+    console.log("Step 3 - User info response:", userData);
 
     if (!userData.username) {
-      throw new Error("Failed to get user info");
+      throw new Error(`Failed to get user info: ${JSON.stringify(userData)}`);
     }
 
     // Step 4: Save to config
@@ -70,9 +71,10 @@ export async function GET(request: NextRequest) {
     expiresAt.setDate(expiresAt.getDate() + 60);
 
     const { data: existingConfig } = await supabase.from("config").select("id").limit(1);
+    console.log("Step 4 - Existing config:", existingConfig);
 
     if (existingConfig && existingConfig.length > 0) {
-      await supabase
+      const updateResult = await supabase
         .from("config")
         .update({
           instagram_token: accessToken,
@@ -83,18 +85,20 @@ export async function GET(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", existingConfig[0].id);
+      console.log("Step 4 - Updated config:", updateResult);
     } else {
-      await supabase.from("config").insert({
+      const insertResult = await supabase.from("config").insert({
         instagram_token: accessToken,
         instagram_user_id: userId,
         instagram_username: userData.username,
         profile_picture_url: userData.profile_picture_url,
         token_expires_at: expiresAt.toISOString(),
       });
+      console.log("Step 4 - Inserted config:", insertResult);
     }
 
     // Step 5: Subscribe to webhooks
-    await fetch(`https://graph.instagram.com/v25.0/${userId}/subscribed_apps`, {
+    const webhookRes = await fetch(`https://graph.instagram.com/v25.0/${userId}/subscribed_apps`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -102,7 +106,10 @@ export async function GET(request: NextRequest) {
         access_token: accessToken,
       }).toString(),
     });
+    const webhookData = await webhookRes.json();
+    console.log("Step 5 - Webhook subscription:", webhookData);
 
+    console.log("✅ OAuth flow completed successfully!");
     return NextResponse.redirect(`${APP_URL}/dashboard?success=connected`);
   } catch (error) {
     console.error("OAuth error:", error);
